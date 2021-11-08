@@ -796,3 +796,27 @@
       (ana/with-warning-handlers [(collecting-warning-handler ws)]
         (build/build (build/inputs (io/file inputs "cljs_3311_regress/core.cljs")) opts cenv))
       (is (empty? @ws)))))
+
+(deftest test-cljs-3332
+  (test/delete-node-modules)
+  (spit (io/file "package.json") "{}")
+  (let [out (.getPath (io/file (test/tmp-dir) "npm-deps-test-out"))
+        {:keys [inputs opts]} {:inputs (str (io/file "src" "test" "cljs_build"))
+                               :opts {:main 'firebase.core
+                                      :output-dir out
+                                      :optimizations :none
+                                      :install-deps true
+                                      :npm-deps {:firebase "9.3.0"}
+                                      :closure-warnings {:check-types :off}}}
+        cenv (env/default-compiler-env)]
+    (test/delete-out-files out)
+    (build/build (build/inputs (io/file inputs "firebase/core.cljs")) opts cenv)
+    (println (:node-module-index @cenv)))
+  (.delete (io/file "package.json"))
+  (test/delete-node-modules))
+
+(comment
+
+  (clojure.test/test-vars [#'test-cljs-3332])
+
+  )
